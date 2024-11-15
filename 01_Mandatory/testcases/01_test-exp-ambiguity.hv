@@ -1,0 +1,22 @@
+﻿hardware: test_exp_ambiguity
+
+inputs: Reset
+outputs: A B C
+
+latches: A
+
+updates:
+Case_01 = A B
+Case_02 = A * B
+Case_03 = A * B + C
+Case_04 = A B + C
+Case_05 = A + B * C
+Case_06 = A + B C
+Case_07 = /B * A
+Case_08 = B * /A
+case_09 = /B + A
+case_10 = B + /A
+
+
+siminputs:
+Reset=0000100
