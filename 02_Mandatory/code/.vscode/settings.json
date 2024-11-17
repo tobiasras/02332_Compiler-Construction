@@ -1,0 +1,7 @@
+{
+    "java.project.referencedLibraries": [
+        "lib/antlr-4.13.2-complete.jar"
+    ],
+    "java.errors.enable": false,
+    "java.validation.enabled": false
+}

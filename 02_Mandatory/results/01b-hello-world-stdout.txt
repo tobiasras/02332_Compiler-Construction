@@ -1,0 +1,48 @@
+Program started: 
+Setting variables:
+	Oscillator
+
+deffinitions
+nor
+
+Cycle 0
+Oscillator	-> true
+Oscillator'	-> false
+Reset	-> false
+
+
+Cycle: 1
+Oscillator	-> false
+Oscillator'	-> true
+Reset	-> false
+
+
+Cycle: 2
+Oscillator	-> true
+Oscillator'	-> false
+Reset	-> false
+
+
+Cycle: 3
+Oscillator	-> false
+Oscillator'	-> true
+Reset	-> false
+
+
+Cycle: 4
+Oscillator	-> false
+Oscillator'	-> false
+Reset	-> true
+
+
+Cycle: 5
+Oscillator	-> true
+Oscillator'	-> false
+Reset	-> false
+
+
+Cycle: 6
+Oscillator	-> false
+Oscillator'	-> true
+Reset	-> false
+

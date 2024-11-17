@@ -1,6 +1,6 @@
 ##### If you have not installed ANTLR in your classpath, you still need to copy antlr-4.13.0-complete.jar to this folder and set up the classpath option:
 
-classpathoption = -cp 'antlr-4.13.2-complete.jar:.'  # if you are using mac/linux
+classpathoption = -cp 'lib/antlr-4.13.2-complete.jar:.'  # if you are using mac/linux
 #classpathoption = -cp 'antlr-4.13.2-complete.jar;.'  # if you are using windows
 
 #classpathoption =   # nothing if already installed
@@ -21,11 +21,9 @@ main.class:	$(SRCFILES) $(GENERATED)
 	javac $(classpathoption) $(SRCFILES) $(GENERATED) 
 
 run:	main.class
-	java $(classpathoption) main cases/01-hello-world.hw  > 01.html
-	java $(classpathoption) main cases/01b-hello-world-withdef.hw  > 01b.html
-	java $(classpathoption) main cases/02-trafiklys-minimal.hw  > 02.html
-	java $(classpathoption) main cases/03-trafiklys.hw  > 03.html
-	java $(classpathoption) main cases/04-von-Neumann.hw  > 04.html
+	#java $(classpathoption) main cases/01-hello-world.hw > ../results/01-hello-world-stdout.txt
+	java $(classpathoption) main cases/01b-hello-world-withdef.hw > ../results/01b-hello-world-stdout.txt
+
 
 grun:	hwLexer.class hwParser.class 01-hello-world.hw
 	$(grun) impl start -gui -tokens 01-hello-world.hw

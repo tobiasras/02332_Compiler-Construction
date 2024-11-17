@@ -1,0 +1,8 @@
+{
+    "java.project.referencedLibraries": [
+        "02_Mandatory/code/lib/antlr-4.13.2-complete.jar"
+    ],
+    "java.project.sourcePaths": [
+        "02_Mandatory/code"
+    ]
+}

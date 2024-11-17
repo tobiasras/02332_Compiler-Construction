@@ -1,12 +1,11 @@
-import java.util.HashMap;
-import java.util.Map.Entry;
-import java.util.List;
-import java.util.ArrayList;
+import jdk.jshell.spi.ExecutionControl;
 
-public abstract class AST{
-    public void error(String msg){
-	System.err.println(msg);
-	System.exit(-1);
+import java.util.List;
+
+public abstract class AST {
+    public void error(String msg) {
+        System.err.println(msg);
+        System.exit(-1);
     }
 };
 
@@ -17,60 +16,131 @@ public abstract class AST{
    (Negation). Moreover, an expression can be using any of the
    functions defined in the definitions. */
 
-abstract class Expr extends AST{}
+abstract class Expr extends AST {
+    abstract public boolean eval(Environment env);
+}
 
-class Conjunction extends Expr{
+
+class Conjunction extends Expr {
     // Example: Signal1 * Signal2 
-    Expr e1,e2;
-    Conjunction(Expr e1,Expr e2){this.e1=e1; this.e2=e2;}
-}
+    Expr e1, e2;
 
-class Disjunction extends Expr{
-    // Example: Signal1 + Signal2 
-    Expr e1,e2;
-    Disjunction(Expr e1,Expr e2){this.e1=e1; this.e2=e2;}
-}
+    Conjunction(Expr e1, Expr e2) {
+        this.e1 = e1;
+        this.e2 = e2;
+    }
 
-class Negation extends Expr{
-    // Example: /Signal
-    Expr e;
-    Negation(Expr e){this.e=e;}
-}
-
-class UseDef extends Expr{
-    // Using any of the functions defined by "def"
-    // e.g. xor(Signal1,/Signal2) 
-    String f;  // the name of the function, e.g. "xor" 
-    List<Expr> args;  // arguments, e.g. [Signal1, /Signal2]
-    UseDef(String f, List<Expr> args){
-	this.f=f; this.args=args;
+    @Override
+    public boolean eval(Environment env) {
+        return e1.eval(env) && e2.eval(env);
     }
 }
 
-class Signal extends Expr{
-    String varname; // a signal is just identified by a name 
-    Signal(String varname){this.varname=varname;}
+class Disjunction extends Expr {
+    // Example: Signal1 + Signal2 
+    Expr e1, e2;
+
+    Disjunction(Expr e1, Expr e2) {
+        this.e1 = e1;
+        this.e2 = e2;
+    }
+
+    @Override
+    public boolean eval(Environment env) {
+        return e1.eval(env) || e2.eval(env);
+    }
 }
 
-class Def extends AST{
+class Negation extends Expr {
+    // Example: /Signal
+    Expr e;
+
+    Negation(Expr e) {
+        this.e = e;
+    }
+
+    @Override
+    public boolean eval(Environment env) {
+        return !e.eval(env);
+    }
+}
+
+
+class Def extends AST {
     // Definition of a function
     // Example: def xor(A,B) = A * /B + /A * B
     String f; // function name, e.g. "xor"
     List<String> args;  // formal arguments, e.g. [A,B]
     Expr e;  // body of the definition, e.g. A * /B + /A * B
-    Def(String f, List<String> args, Expr e){
-	this.f=f; this.args=args; this.e=e;
+
+    Def(String f, List<String> args, Expr e) {
+        this.f = f;
+        this.args = args;
+        this.e = e;
+    }
+
+    @Override
+    public String toString() {
+        return f + "\n" + args + "\n";
     }
 }
+
+class UseDef extends Expr {
+    // Using any of the functions defined by "def"
+    // e.g. xor(Signal1,/Signal2) 
+    String f;  // the name of the function, e.g. "xor" 
+    List<Expr> args;  // arguments, e.g. [Signal1, /Signal2]
+
+    UseDef(String f, List<Expr> args) {
+        this.f = f;
+        this.args = args;
+    }
+
+    @Override
+    public boolean eval(Environment env) {
+        Def def = env.getDef(f);
+
+        Environment defEnv = new Environment(env);
+
+        for (int i = 0; i < def.args.size(); i++) {
+            defEnv.setVariable(def.args.get(i), this.args.get(i).eval(env));
+        }
+
+        return def.e.eval(defEnv);
+    }
+}
+
+class Signal extends Expr {
+    String varname; // a signal is just identified by a name 
+
+    Signal(String varname) {
+        this.varname = varname;
+    }
+
+    @Override
+    public boolean eval(Environment env) {
+        return env.getVariable(varname);
+    }
+}
+
+
 
 // An Update is any of the lines " signal = expression "
 // in the update section
 
-class Update extends AST{
-    // Example Signal1 = /Signal2 
+class Update extends AST {
+    // Example Signal1 = /Signal2
     String name;  // Signal being updated, e.g. "Signal1"
     Expr e;  // The value it receives, e.g., "/Signal2"
-    Update(String name, Expr e){this.e=e; this.name=name;}
+
+    Update(String name, Expr e) {
+        this.e = e;
+        this.name = name;
+    }
+
+    void eval(Environment env) {
+        env.setVariable(name, e.eval(env));
+    }
 }
 
 /* A Trace is a signal and an array of Booleans, for instance each
@@ -80,13 +150,22 @@ class Update extends AST{
    assignment.
 */
 
-class Trace extends AST{
+class Trace extends AST {
     // Example Signal = 0101010
     String signal;
     Boolean[] values;
-    Trace(String signal, Boolean[] values){
-	this.signal=signal;
-	this.values=values;
+
+    Trace(String signal, Boolean[] values) {
+        this.signal = signal;
+        this.values = values;
+    }
+
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        for (Boolean value : values) {
+            sb.append(value ? "1" : "0");
+        }
+        return sb.toString();
     }
 }
 
@@ -108,29 +187,100 @@ class Trace extends AST{
    traces should also finally have the length simlength.
 */
 
-class Circuit extends AST{
-    String name;  
-    List<String> inputs; 
+
+class Circuit extends AST {
+    String name;
+    List<String> inputs;
     List<String> outputs;
-    List<String>  latches;
+    List<String> latches;
     List<Def> definitions;
     List<Update> updates;
-    List<Trace>  siminputs;
-    List<Trace>  simoutputs;
+    List<Trace> siminputs;
+    List<Trace> simoutputs;
+
     int simlength;
+
     Circuit(String name,
-	    List<String> inputs,
-	    List<String> outputs,
-	    List<String>  latches,
-	    List<Def> definitions,
-	    List<Update> updates,
-	    List<Trace>  siminputs){
-	this.name=name;
-	this.inputs=inputs;
-	this.outputs=outputs;
-	this.latches=latches;
-	this.definitions=definitions;
-	this.updates=updates;
-	this.siminputs=siminputs;
+            List<String> inputs,
+            List<String> outputs,
+            List<String> latches,
+            List<Def> definitions,
+            List<Update> updates,
+            List<Trace> siminputs) {
+        this.name = name;
+        this.inputs = inputs;
+        this.outputs = outputs;
+        this.latches = latches;
+        this.definitions = definitions;
+        this.updates = updates;
+        this.siminputs = siminputs;
+
+        // total cycles
+        this.simlength = siminputs.getFirst().values.length;
     }
+
+    private void initialize(Environment env) {
+        if (siminputs.isEmpty()) {
+            error("No Inputs Given");
+        }
+        // Call the latchesInit method to initialize all outputs of latches.
+        latchesInit(env);
+
+        // Read the input value of every input signal at time point 0
+        for (Trace siminput : siminputs) {
+            env.setVariable(siminput.signal, siminput.values[0]);
+        }
+
+        // first cycle
+        for (Update update : updates) {
+            update.eval(env);
+        }
+
+
+        System.out.println("Cycle 0");
+        System.out.println(env);
+    }
+
+    private void latchesInit(Environment env) {
+        for (String latch : latches) {
+            env.setVariable(latch + "'", false);
+        }
+    }
+
+    private void latchesUpdate(Environment env) {
+        for (String latch : latches) {
+            boolean updatedVal = env.getVariable(latch);
+            env.setVariable(latch + "'", updatedVal);
+        }
+    }
+
+    private void nextCycle(Environment env, int i) {
+        // errors can happen if i is greater than sim input length:
+        for (Trace siminput : siminputs) {
+            env.setVariable(siminput.signal, siminput.values[i]);
+        }
+
+        latchesUpdate(env);
+
+        for (Update update : updates) {
+            update.eval(env);
+        }
+
+        System.out.println("\nCycle: " + i);
+        System.out.println(env);
+    }
+
+    void runSimulator() {
+        Environment env = new Environment(definitions);
+        initialize(env);
+
+        // We start from 1 not 0. because 1 iteration is run in the initialize method!
+        for (int i = 1; i < simlength; i++) {
+            nextCycle(env, i);
+        }
+    }
+
+
 }
+
+
