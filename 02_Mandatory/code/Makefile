@@ -21,9 +21,11 @@ main.class:	$(SRCFILES) $(GENERATED)
 	javac $(classpathoption) $(SRCFILES) $(GENERATED) 
 
 run:	main.class
-	#java $(classpathoption) main cases/01-hello-world.hw > ../results/01-hello-world-stdout.txt
-	java $(classpathoption) main cases/01b-hello-world-withdef.hw > ../results/01b-hello-world-stdout.txt
-
+	java $(classpathoption) main cases/01-hello-world.hw
+	java $(classpathoption) main cases/01b-hello-world-withdef.hw
+	java $(classpathoption) main cases/02-trafiklys-minimal.hw
+	java $(classpathoption) main cases/03-trafiklys.hw
+	java $(classpathoption) main cases/04-von-Neumann.hw
 
 grun:	hwLexer.class hwParser.class 01-hello-world.hw
 	$(grun) impl start -gui -tokens 01-hello-world.hw

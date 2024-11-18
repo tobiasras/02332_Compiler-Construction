@@ -1,6 +1,3 @@
-import java.util.HashMap;
-import java.util.Map.Entry;
-
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.CharStream;
@@ -15,7 +12,6 @@ import java.io.IOException;
 @SuppressWarnings("all")
 public class main {
     public static void main(String[] args) throws IOException {
-		System.out.println("Program started: ");
 
 	// we expect exactly one argument: the name of the inpu t file
 	if (args.length!=1) {
@@ -42,27 +38,13 @@ public class main {
 	// and parse anything from the grammar for "start"
 	ParseTree parseTree = parser.start();
 
-	// The JaxMaker is a visitor that produces html/jax output as a string
-	// String result = new JaxMaker().visit(parseTree);
-	// System.out.println("\n\n\n"+result);
 
-	/* The AstMaker generates the abstract syntax to be used for
-	   the second assignment, where for the start symbol of the
-	   ANTLR grammar, it generates an object of class Circuit (see
-	   AST.java). */
-	
 	Circuit p = (Circuit) new AstMaker().visit(parseTree);
 
+	String result = p.runSimulator();
 
-	p.runSimulator();
-
-	/* For the second assignment you need to extend the classes of
-	    AST.java with some methods that correspond to running a
-	    simulation of the given hardware for given simulation
-	    inputs. The method for starting the simulation should be
-	    called here for the Circuit p. */
-
-
+	System.out.println("\n" + "result for: " + filename);
+	System.out.println(result);
     }
 
 }

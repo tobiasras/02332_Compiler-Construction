@@ -1,10 +1,4 @@
 Program started: 
-Setting variables:
-	Oscillator
-
-deffinitions
-nor
-
 Cycle 0
 Oscillator	-> true
 Oscillator'	-> false
@@ -45,4 +39,6 @@ Cycle: 6
 Oscillator	-> false
 Oscillator'	-> true
 Reset	-> false
+
+Reset	0000100
 

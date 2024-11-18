@@ -1,5 +1,4 @@
-import jdk.jshell.spi.ExecutionControl;
-
+import java.util.ArrayList;
 import java.util.List;
 
 public abstract class AST {
@@ -172,12 +171,12 @@ class Trace extends AST {
 /* The main data structure of this simulator: the entire circuit with
    its inputs, outputs, latches, definitions and updates. Additionally
    for each input signal, it has a Trace as simulation input.
-   
+
    There are two variables that are not part of the abstract syntax
    and thus not initialized by the constructor (so far): simoutputs
    and simlength. It is suggested to use these two variables for
-   assignment 2 as follows: 
- 
+   assignment 2 as follows:
+
    1. all siminputs should have the same length (this is part of the
    checks that you should implement). set simlength to this length: it
    is the number of simulation cycles that the interpreter should run.
@@ -215,6 +214,7 @@ class Circuit extends AST {
         this.updates = updates;
         this.siminputs = siminputs;
 
+        this.simoutputs = new ArrayList<>();
         // total cycles
         this.simlength = siminputs.getFirst().values.length;
     }
@@ -223,29 +223,40 @@ class Circuit extends AST {
         if (siminputs.isEmpty()) {
             error("No Inputs Given");
         }
-        // Call the latchesInit method to initialize all outputs of latches.
-        latchesInit(env);
 
-        // Read the input value of every input signal at time point 0
+        // Latches init
+        // initializes all latches with false
+        for (String latch : latches) {
+            env.setVariable(latch + "'", false);
+        }
+
+        // initializes all input values.
+        // Reading the input values of every input signal at time point 0.
         for (Trace siminput : siminputs) {
             env.setVariable(siminput.signal, siminput.values[0]);
         }
 
         // first cycle
-        for (Update update : updates) {
+        // is run to initilize the first v
+        /*
+            Example of a 4 sized update:
+
+                Red = /Red' * Button
+                Green  = /Red
+                PGreen = Red
+                PRed   = /PGreen
+         */
+        for (int i = 0, updatesSize = updates.size(); i < updatesSize; i++) {
+            Update update = updates.get(i);
             update.eval(env);
-        }
 
-
-        System.out.println("Cycle 0");
-        System.out.println(env);
-    }
-
-    private void latchesInit(Environment env) {
-        for (String latch : latches) {
-            env.setVariable(latch + "'", false);
+            // for storing outputs later:
+            Trace traceOutput = new Trace(update.name, new Boolean[simlength]);
+            traceOutput.values[0] = env.getVariable(update.name);
+            simoutputs.add(traceOutput);
         }
     }
+
 
     private void latchesUpdate(Environment env) {
         for (String latch : latches) {
@@ -262,15 +273,19 @@ class Circuit extends AST {
 
         latchesUpdate(env);
 
-        for (Update update : updates) {
+        // run evales on update
+        for (int j = 0, updatesSize = updates.size(); j < updatesSize; j++) {
+            // j counts updates
+            // i is current cycle
+            Update update = updates.get(j);
             update.eval(env);
-        }
 
-        System.out.println("\nCycle: " + i);
-        System.out.println(env);
+            // for storing outputs later:
+            this.simoutputs.get(j).values[i] = env.getVariable(update.name);
+        }
     }
 
-    void runSimulator() {
+    public String runSimulator() {
         Environment env = new Environment(definitions);
         initialize(env);
 
@@ -278,8 +293,32 @@ class Circuit extends AST {
         for (int i = 1; i < simlength; i++) {
             nextCycle(env, i);
         }
+
+        return output();
     }
 
+    private String output(){
+        simoutputs.addAll(siminputs);
+
+        StringBuilder sb = new StringBuilder();
+
+        int maxSignalLength = 0;
+        for (Trace simoutput : simoutputs) {
+            maxSignalLength = Math.max(maxSignalLength, simoutput.signal.length());
+        }
+        // Create the table
+        for (Trace simoutput : simoutputs) {
+            // Format signal name to align properly
+            sb.append(String.format("%-" + (maxSignalLength + 2) + "s", simoutput.signal)); // Left-align signal names
+
+            for (boolean value : simoutput.values) {
+                sb.append(value ? "1 " : "0 ");
+            }
+            sb.append("\n");
+        }
+
+        return sb.toString();
+    }
 
 }
 
