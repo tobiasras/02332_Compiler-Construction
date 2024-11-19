@@ -31,13 +31,12 @@ public class main {
 
 	CommonTokenStream tokens = new CommonTokenStream(lex);
 	// get the stream of tokens from the scanner
-	//CommonTokenStream tokens = new CommonTokenStream(lex);
+	// CommonTokenStream tokens = new CommonTokenStream(lex);
 	// create a parser
 	hwParser parser = new hwParser(tokens);
 	
 	// and parse anything from the grammar for "start"
 	ParseTree parseTree = parser.start();
-
 
 	Circuit p = (Circuit) new AstMaker().visit(parseTree);
 

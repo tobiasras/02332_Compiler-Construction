@@ -1,5 +1,7 @@
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public abstract class AST {
     public void error(String msg) {
@@ -168,7 +170,8 @@ class Trace extends AST {
     }
 }
 
-/* The main data structure of this simulator: the entire circuit with
+/*
+   The main data structure of this simulator: the entire circuit with
    its inputs, outputs, latches, definitions and updates. Additionally
    for each input signal, it has a Trace as simulation input.
 
@@ -297,17 +300,31 @@ class Circuit extends AST {
         return output();
     }
 
+
     private String output(){
+        // stores all data
         simoutputs.addAll(siminputs);
 
+        // we only want to see inputs and outputs
+        // is speciefied in the 2 list output and input.
+        HashSet<String> outputOfInterest = new HashSet<>();
+        outputOfInterest.addAll(outputs);
+        outputOfInterest.addAll(inputs);
+
+        List<Trace> relevantOutputs = simoutputs.stream()
+                .filter(simoutput -> outputOfInterest.contains(simoutput.signal))
+                .toList();
+
+        // Creates the string to be printed!
         StringBuilder sb = new StringBuilder();
 
         int maxSignalLength = 0;
         for (Trace simoutput : simoutputs) {
             maxSignalLength = Math.max(maxSignalLength, simoutput.signal.length());
         }
+
         // Create the table
-        for (Trace simoutput : simoutputs) {
+        for (Trace simoutput : relevantOutputs) {
             // Format signal name to align properly
             sb.append(String.format("%-" + (maxSignalLength + 2) + "s", simoutput.signal)); // Left-align signal names
 
